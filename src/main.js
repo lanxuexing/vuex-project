@@ -8,4 +8,5 @@ Vue.config.productionTip = false
 new Vue({
   store, // 把vuex注册到根组件实例中去
   render: h => h(App),
+  name: 'Root'
 }).$mount('#app')

@@ -1,6 +1,11 @@
 import Vue from 'vue'
-import Vuex from 'vuex'
+import Vuex from '@/vuex'
 
+/**
+ * 1. Vuex是一个对象，具有一个install方法
+ * 2. Vuex中有一个Store类
+ * 3. 混入到组件中，增加store属性
+ */
 Vue.use(Vuex)
 
 const store = new Vuex.Store({
@@ -20,7 +25,7 @@ const store = new Vuex.Store({
         }
     }, 
     mutations: { // --> 同步方法更改state
-        /**
+        /** 
          * mutations具有的所有可选参数：
          * @param state: S
          * @param payload?: any

@@ -13,11 +13,20 @@
     <p>
       <button @click="$store.dispatch('changeCounter', 2)">异步修改计数器</button>
     </p>
+    <p>
+      <button @click="$store.state.counter = parseInt((Math.random() * 100) + 1)">测试自定义Vuex</button>
+    </p>
   </div>
 </template>
 
 <script>
-export default { }
+export default {
+  name: 'App',
+
+  mounted() {
+    console.log('测试一下我自己的Vuex: ', this.$store)
+  },
+}
 </script>
 
 <style>
