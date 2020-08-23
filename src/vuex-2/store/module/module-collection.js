@@ -1,4 +1,5 @@
-import { forEachValue } from "../util"
+import { forEachValue } from '../util'
+import Module from './module'
 
 /**
  * 目标是格式成以下的数据格式：
@@ -32,11 +33,7 @@ class ModuleCollection {
     }
 
     register(path, rootModule) {
-        let newModule = {
-            _raw: rootModule, // 原来的模块（用户自定义）
-            _children: {}, // 模块的儿子
-            state: rootModule.state // 当前模块的状态
-        }
+        let newModule = new Module(rootModule)
 
         if (path.length == 0) { // 根模块
             this.root = newModule
@@ -45,15 +42,18 @@ class ModuleCollection {
             // [a, c]
             // [a, b, c, d]
             let parent = path.slice(0, -1).reduce((memo, current) => {
-                return memo._children[current]
+                // return memo._children[current]
+                return memo.getChild(current) // 抽离之后的代码
             }, this.root)
-            parent._children[path[path.length - 1]] = newModule
+            // parent._children[path[path.length - 1]] = newModule
+            parent.addChild(path[path.length - 1], newModule) // 抽离之后的代码
 
-            // 错误代码，都跑到根上了
+            // Error：错误代码，都跑到根上了
             // this.root._children[path[path.length - 1]] = newModule
         }
 
         if (rootModule.modules) {
+            // 循环模块
             forEachValue(rootModule.modules, (module, moduleName) => {
                 this.register(path.concat(moduleName), module)
             })

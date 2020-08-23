@@ -4,6 +4,35 @@ import ModuleCollection from './module/module-collection'
 
 export let Vue;
 
+// 对当前模块进行操作，即：遍历所有actions、mutations、getters
+const installModule = (store, rootState, path, module) => {
+    module.forEachMutation((mutation, key) => {
+        store._mutations[key] = (store._mutations[key] || [])
+        store._mutations[key].push((payload) => {
+            mutation.call(store, module.state, payload)
+        })
+    })
+
+    module.forEachAction((action, key) => {
+        store._actions[key] = (store._actions[key] || [])
+        store._actions[key].push((payload) => {
+            action.call(store, store, payload)
+        })
+    })
+
+    module.forEachGetter((getter, key) => {
+        // 模块中getter的名字重复会覆盖
+        store._wrappedGetters[key] = function () {
+            return getter(module.state)
+        }
+    })
+
+    module.forEachChild((child, key) => {
+        // 递归加载模块
+        installModule(store, rootState, path.concat(key), child)
+    })
+}
+
 // 容器的初始化
 export class Store {
     /**
@@ -18,10 +47,18 @@ export class Store {
      * @param devtools?: boolean
      */
     constructor(options) {
-        // const state = options.state // 数据变化要更新视图，Vue的核心逻辑是依赖收集
+        const state = options.state // 数据变化要更新视图，Vue的核心逻辑是依赖收集
+        this._actions = {}
+        this._mutations = {}
+        this._wrappedGetters = {}
 
-        // 数据格式化，Tree
+        // 1. 数据格式化，Tree（PS：模块收集）
         this._modules = new ModuleCollection(options)
+
+        // 2. 安装，根模块的状态要将子模块通过模块名定义在根上边
+        installModule(this, state, [], this._modules.root)
+
+        console.log(this._actions, this._mutations, this._wrappedGetters)
         console.log(this._modules)
     }
 
