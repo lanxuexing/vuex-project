@@ -1,5 +1,6 @@
 import ApplyMixin from './mixin'
-import { forEachValue } from './util'
+// import { forEachValue } from './util'
+import ModuleCollection from './module/module-collection'
 
 export let Vue;
 
@@ -17,48 +18,11 @@ export class Store {
      * @param devtools?: boolean
      */
     constructor(options) {
-        const state = options.state // 数据变化要更新视图，Vue的核心逻辑是依赖收集
+        // const state = options.state // 数据变化要更新视图，Vue的核心逻辑是依赖收集
 
-        // 响应式数据，即：new Vue({ data })
-
-        const computed = {}
-
-        // 2. 处理getters属性，默认具有缓存机制，computed带有缓存（即：多次取值的时候，如果值不变是不会重新取值的）
-        this.getters = {}
-        forEachValue(options.getters, (fn, key) => {
-            // 将用户的getters定义在实例上边
-            computed[key] = () => {
-                return fn(this.state)
-            }
-            // 取值的时候执行计算属性的值
-            Object.defineProperty(this.getters, key, {
-                get: () => this._vm[key]
-            })
-        })
-
-        // 1. 添加状态逻辑：数据在哪使用，就在哪进行依赖收集
-        this._vm = new Vue({
-            // 会将$$state对应的对象，都通过Object.defindProperty()来进行属性劫持
-            data: {
-                // 属性如果是通过$开头的，Vue内部默认不会将这个属性挂载到vm上，源码会默认将这些$开头的属性挂载到_data属性上边
-                $$state: state
-            },
-            computed
-        })
-
-        // 3. 实现mutations
-        this.mutations = {}
-        forEachValue(options.mutations, (fn, key) => {
-            this.mutations[key] = (payload) => fn(this.state, payload)
-        })
-
-        // 3. 实现actions
-        this.actions = {}
-        forEachValue(options.actions, (fn, key) => {
-            this.actions[key] = (payload) => fn(this, payload)
-        })
-
-        console.log('vm: ', this._vm)
+        // 数据格式化，Tree
+        this._modules = new ModuleCollection(options)
+        console.log(this._modules)
     }
 
     // 属性访问器

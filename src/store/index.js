@@ -1,9 +1,13 @@
 import Vue from 'vue'
+// import Vuex from 'vuex'
+
 // 1. 简易版本（不包含module）
 // import Vuex from '@/vuex-1'
 
 // 2. 完整版本（含module）
 import Vuex from '@/vuex-2'
+import a from './module/a'
+import b from './module/b'
 
 /**
  * 1. Vuex是一个对象，具有一个install方法
@@ -56,6 +60,10 @@ const store = new Vuex.Store({
                 commit('changeCounter', payload)
             }, 1000);
         }
+    },
+    modules: {
+        a,
+        b
     }
 })
 

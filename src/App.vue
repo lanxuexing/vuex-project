@@ -7,11 +7,20 @@
     <p>自定义的计数器值是: 
       <b style="font-size: 32px;">{{ this.$store.getters.mCounter }}</b>
     </p>
+    <p>A模块的计数器值是: 
+      <b style="font-size: 32px;">{{ this.$store.state.a.counter }}</b>
+    </p>
+    <p>B模块的计数器值是: 
+      <b style="font-size: 32px;">{{ this.$store.state.b.counter }}</b>
+    </p>
     <p>
       <button @click="$store.commit('changeCounter', 1)">同步修改计数器</button>
     </p>
     <p>
       <button @click="$store.dispatch('changeCounter', 2)">异步修改计数器</button>
+    </p>
+    <p>
+      <button @click="$store.commit('a/changeCounter', 1)">同步修改A模块计数器</button>
     </p>
     <p>
       <button @click="$store.state.counter = parseInt((Math.random() * 100) + 1)">测试自定义Vuex</button>
