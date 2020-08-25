@@ -1,5 +1,7 @@
 # vuex-project
 
+> vuex-1 简易版本的vuex <br> vuex-2 完整版本的vuex
+
 ## Project setup
 ```
 npm install
