@@ -32,6 +32,14 @@ class ModuleCollection {
         this.register([], options)
     }
 
+    getNameSpaced(path) {
+        let root = this.root // 从根模块开始查找
+        return path.reduce((str, key) => {
+            root = root.getChild(key)
+            return str + root.namespanced ? key + '/' : ''
+        }, '')
+    }
+
     register(path, rootModule) {
         let newModule = new Module(rootModule)
 

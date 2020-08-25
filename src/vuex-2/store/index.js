@@ -7,6 +7,9 @@ export let Vue;
 
 // 对当前模块进行操作，即：遍历所有actions、mutations、getters... 把他们都定义到收集器上边
 const installModule = (store, rootState, path, module) => {
+    // 给当前订阅的事件增加一个命名空间，以项目中的例子为例：a/changeCounter  b/changeCounter  a/c/changeCounter
+    let namespanced = store._modules.getNameSpaced(path) // 方法返回前缀
+
     // 将所有的子模块的状态安装到父模块的状态上边
     if (path.length > 0) { // vuex可以动态的添加模块
         let parent = path.slice(0, -1).reduce((memo, current) => {
@@ -17,22 +20,22 @@ const installModule = (store, rootState, path, module) => {
     }
 
     module.forEachMutation((mutation, key) => {
-        store._mutations[key] = (store._mutations[key] || [])
-        store._mutations[key].push((payload) => {
+        store._mutations[namespanced + key] = (store._mutations[namespanced + key] || [])
+        store._mutations[namespanced + key].push((payload) => {
             mutation.call(store, module.state, payload)
         })
     })
 
     module.forEachAction((action, key) => {
-        store._actions[key] = (store._actions[key] || [])
-        store._actions[key].push((payload) => {
+        store._actions[namespanced + key] = (store._actions[namespanced + key] || [])
+        store._actions[namespanced + key].push((payload) => {
             action.call(store, store, payload)
         })
     })
 
     module.forEachGetter((getter, key) => {
         // 模块中getter的名字重复会覆盖
-        store._wrappedGetters[key] = function () {
+        store._wrappedGetters[namespanced + key] = function () { 
             return getter(module.state)
         }
     })

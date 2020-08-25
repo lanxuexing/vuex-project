@@ -7,6 +7,10 @@ class Module {
         this.state = newModule.state // 当前模块的状态
     }
 
+    get namespanced() {
+        return !!this._raw.namespanced
+    }
+
     getChild(key) {
         return this._children[key]
     }
