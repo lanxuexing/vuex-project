@@ -5,7 +5,8 @@
  */
 import { Store, install } from './store'
 
- export default {
+export * from './store/helpers'
+export default {
     Store,
     install
- }
+}
