@@ -5,6 +5,13 @@ import { forEachValue } from './util';
 
 export let Vue;
 
+// 获取最新的状态，保证视图更新
+function getState(store, path) {
+    return path.reduce((newState, current) => {
+        return newState[current]
+    }, store.state)
+}
+
 // 对当前模块进行操作，即：遍历所有actions、mutations、getters... 把他们都定义到收集器上边
 const installModule = (store, rootState, path, module) => {
     // 给当前订阅的事件增加一个命名空间，以项目中的例子为例：a/changeCounter  b/changeCounter  a/c/changeCounter
@@ -22,7 +29,12 @@ const installModule = (store, rootState, path, module) => {
     module.forEachMutation((mutation, key) => {
         store._mutations[namespanced + key] = (store._mutations[namespanced + key] || [])
         store._mutations[namespanced + key].push((payload) => {
-            mutation.call(store, module.state, payload)
+            // mutation.call(store, module.state, payload)
+            mutation.call(store, getState(store, path), payload) // 数据持久化优化
+            store._subscribe.forEach(fn => {
+                // fn(mutation, rootState)
+                fn(mutation, store.state) // 数据持久化优化
+            })
         })
     })
 
@@ -36,7 +48,8 @@ const installModule = (store, rootState, path, module) => {
     module.forEachGetter((getter, key) => {
         // 模块中getter的名字重复会覆盖
         store._wrappedGetters[namespanced + key] = function () { 
-            return getter(module.state)
+            // return getter(module.state)
+            return getter(getState(store, path)) // 数据持久化优化
         }
     })
 
@@ -86,6 +99,7 @@ export class Store {
         this._actions = {}
         this._mutations = {}
         this._wrappedGetters = {}
+        this._subscribe = []
 
         // 1. 数据格式化，Tree（PS：模块收集）
         this._modules = new ModuleCollection(options)
@@ -95,6 +109,9 @@ export class Store {
 
         // 3. 创建实例，将状态和getters都定义到当前的vm上
         resetStoreVM(this, state)
+
+        // 4. 插件支持，插件内部依次执行
+        options.plugins.forEach(plugin => plugin(this))
 
         console.log(this._actions, this._mutations, this._wrappedGetters)
         console.log(this._modules)
@@ -116,6 +133,15 @@ export class Store {
     dispatch = (type, payload) => {
         console.log('用户dispatch: ', this._actions)
         this._actions[type].forEach(actions => actions.call(this, payload))
+    }
+
+    replaceState(state) {
+        // 替换最新的状态
+        this._vm._data.$$state = state
+    }
+
+    subscribe(fn) {
+        this._subscribe.push(fn)
     }
 }
 

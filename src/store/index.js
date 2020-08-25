@@ -1,6 +1,20 @@
 import Vue from 'vue'
 // import Vuex from 'vuex'
 
+function persists() {
+    return function (store) { // store是默认传递的
+        // 加载时，反显状态
+        let data = localStorage.getItem('VUEX:STATE')
+        if (data) {
+            store.replaceState(JSON.parse(data))
+        }
+        // 订阅函数，原生支持
+        store.subscribe((mutation, state) => {
+            localStorage.setItem('VUEX:STATE', JSON.stringify(state))
+        })
+    }
+}
+
 // 1. 简易版本（不包含module）
 // import Vuex from '@/vuex-1'
 
@@ -13,7 +27,7 @@ import b from './module/b'
  * 1. Vuex是一个对象，具有一个install方法
  * 2. Vuex中有一个Store类
  * 3. 混入到组件中，增加store属性
- */
+ */ 
 Vue.use(Vuex)
 
 const store = new Vuex.Store({
@@ -64,7 +78,10 @@ const store = new Vuex.Store({
     modules: {
         a,
         b
-    }
+    },
+    plugins: [
+        persists()
+    ]
 })
 
 export default store;
