@@ -1,11 +1,21 @@
 import ApplyMixin from './mixin'
 // import { forEachValue } from './util'
 import ModuleCollection from './module/module-collection'
+import { forEachValue } from './util';
 
 export let Vue;
 
-// 对当前模块进行操作，即：遍历所有actions、mutations、getters
+// 对当前模块进行操作，即：遍历所有actions、mutations、getters... 把他们都定义到收集器上边
 const installModule = (store, rootState, path, module) => {
+    // 将所有的子模块的状态安装到父模块的状态上边
+    if (path.length > 0) { // vuex可以动态的添加模块
+        let parent = path.slice(0, -1).reduce((memo, current) => {
+            return memo[current]
+        }, rootState)
+        // 如果这个对象本身不是响应式的，那么Vue.set()相当于：obj[属性] = 值
+        Vue.set(parent, path[path.length - 1], module.state)
+    }
+
     module.forEachMutation((mutation, key) => {
         store._mutations[key] = (store._mutations[key] || [])
         store._mutations[key].push((payload) => {
@@ -30,6 +40,28 @@ const installModule = (store, rootState, path, module) => {
     module.forEachChild((child, key) => {
         // 递归加载模块
         installModule(store, rootState, path.concat(key), child)
+    })
+}
+
+
+function resetStoreVM(store, state) {
+    const computed = {} // 定义计算属性
+    store.getters = {} // 定义store中的getters
+
+    forEachValue(store._wrappedGetters, (fn, key) => {
+        computed[key] = () => {
+            return fn()
+        }
+        Object.defineProperty(store.getters, key, {
+            get: () => store._vm[key]
+        })
+    })
+
+    store._vm = new Vue({
+        data: {
+            $$state: state // 把根状态直接变成响应式的
+        },
+        computed
     })
 }
 
@@ -58,6 +90,9 @@ export class Store {
         // 2. 安装，根模块的状态要将子模块通过模块名定义在根上边
         installModule(this, state, [], this._modules.root)
 
+        // 3. 创建实例，将状态和getters都定义到当前的vm上
+        resetStoreVM(this, state)
+
         console.log(this._actions, this._mutations, this._wrappedGetters)
         console.log(this._modules)
     }
@@ -70,12 +105,14 @@ export class Store {
     // 保证this指向，始终指向当前stote实例
     commit = (type, payload) => {
         // 调用commit，其实就是去找绑定好的mutations
-        this.mutations[type](payload)
+        console.log('用户commit: ', this._mutations)
+        this._mutations[type].forEach(mutation => mutation.call(this, payload))
     }
 
     // 保证this指向，始终指向当前stote实例
     dispatch = (type, payload) => {
-        this.actions[type](payload)
+        console.log('用户dispatch: ', this._actions)
+        this._actions[type].forEach(actions => actions.call(this, payload))
     }
 }
 
